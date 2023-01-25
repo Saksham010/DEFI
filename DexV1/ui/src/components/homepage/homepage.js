@@ -1,4 +1,4 @@
-
+import Asset from "../asset/asset";
 export default function Homepage(){
     
     if (typeof window.ethereum !== 'undefined') {
@@ -8,7 +8,7 @@ export default function Homepage(){
 
     return(
         <div>
-            Homepage
+            <Asset type="Swap"/>
 
         </div>
     )

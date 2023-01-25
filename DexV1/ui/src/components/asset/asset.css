@@ -1,0 +1,148 @@
+*{
+    box-sizing: border-box;
+
+}
+.assetContainer{
+    width: 27%;
+    margin: 20vh auto;
+    /* background-color: #393E46; */
+    background-color: #202231;
+    padding: 2rem;
+    border-radius: 20px;
+   
+}
+
+.assetContainer h3{
+    color: white;
+    text-align: center;
+    padding-bottom: 1.3rem;
+}
+
+
+.asset{
+    background-color: #17091F;
+    border: 1px #393E46 solid;
+    border-radius: 20px;
+    /* color: #7BC74D; */
+    color: white;
+    padding: 1rem;
+}
+
+.asset:hover{
+    border:1.5px #454950 solid;
+}
+
+/* Ticker */
+
+.ethImg{
+    width: 100%;
+    /* border:1px red solid; */
+    margin-top: 0.3vh;
+    align-self: flex-end;
+}
+.ethImg img{
+
+    width: 100%;
+}
+
+.ticker{
+    /* border: 1px red solid; */
+    background-color:#202231 ;
+    display: flex;
+    width:21.2%;
+    padding: 0.7vh 0 ;
+    padding-left: 0.8vw;
+    padding-right: 0.8vw;
+    border-radius: 30px;
+    /* align-items: baseline; */
+}
+.ticker:hover{
+    background-color: #333546;
+}
+.ticker span{
+    /* border: 1px red solid; */
+    /* display: inline-block; */
+    /* padding-bottom: 2rem; */
+    font-weight: 500;
+    font-size: 1.1em;
+    padding-left: 0.4vw;
+    /* margin-bottom: 1vh; */
+
+}
+
+/* Input */
+
+.input-amount{
+    display: flex;
+    justify-content: space-between;
+    padding-left: 0.1vw;
+    align-items: baseline;
+
+}
+.input-amount input{
+    padding: 0.6rem;
+    font-size: 1.1em;
+    background-color:#17091F;
+    color: #C1C2C6;
+    border: none;
+}
+.input-amount input:focus{
+    outline:none ;
+
+}
+
+.innerInput{
+    /* border: 1px red solid; */
+    width: 75%;
+    
+    
+}
+.innerInput:hover{
+    cursor: text;
+}
+
+.innerInput span{
+    font-size: 0.6em;
+    color:#C1C2C6;
+}
+
+.input-amount .balance{
+    /* border: 1px green solid; */
+    width: 22%;
+    font-size: 0.7em;
+    color:#C1C2C6;
+
+}
+
+/* Button */
+.addBtn{
+    width: 100%;
+    /* border: 1px yellow solid; */
+    text-align: center;
+    padding-top: 2.5vh;
+}
+
+.addLiquidbtn{
+    background-color: #7BC74D;
+    /* background-color:#17091fe7 ; */
+    border: none;
+    padding: 1rem;
+    border-radius: 5px;
+    width: 98%;
+    font-size: 1em;
+    color:#7BC74D ;
+    border: 1px #454950 solid;
+    color:rgb(255, 251, 251);
+    cursor: pointer;
+    font-weight: bold;
+
+    /* border: 1px red solid; */
+    
+}
+
+.addLiquidbtn:hover{
+    background-color: #8add56;
+    color: rgba(255, 254, 254, 0.842);
+
+
+}
