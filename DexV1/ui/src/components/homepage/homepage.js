@@ -1,14 +1,16 @@
 import Asset from "../asset/asset";
-export default function Homepage(){
+import { ethers } from "ethers";
+export default function Homepage(props){
     
     if (typeof window.ethereum !== 'undefined') {
         console.log('MetaMask is installed!');
-      }
-      
+    }
+
+    
 
     return(
         <div>
-            <Asset type="Swap"/>
+            <Asset type="Swap" />
 
         </div>
     )

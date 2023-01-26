@@ -1,92 +1,55 @@
 import "./connect.css";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
-
+import {useCookies} from "react-cookie";
 
 export default function Connect(){
+
+    //Cookie
+    const [cookies,setCookie,removeCookie] = useCookies(['WalletAddress']);
 
     //Provider
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
-    const [userDetail, setuserDetail] = useState({
-        currentAccount: null,
-        connectedAccount: null,
-        chain: null,
-    })
-
-    const [text,setText] = useState("Connect With Metamask");
-
-
 
     async function connectWithMetamask (){
 
-        if(userDetail.connectedAccount == null){
-            console.log("This time: ", userDetail.connectedAccount );
-            const accounts = await provider.send("eth_requestAccounts",[]);
-            const networks = await provider.getNetwork();
-            console.log(accounts);
-            console.log(networks);
-    
-            if(networks.name != 'goerli'){
-                alert("Wrong chain switch to goerli testnet");
-    
-                return;
-            }
-            else{
-    
-                setuserDetail(prev =>{
-                    return{
-                        ...prev,
-                        currentAccount: accounts[0],
-                        connectedAccount: accounts[0],
-                        chain: networks.name
-                    }
-                });
-                const partialAddress = accounts[0].slice(0,14);
-                setText(`${partialAddress}...`);
-    
-            }
+        const accounts = await provider.send("eth_requestAccounts",[]);
+        const networks = await provider.getNetwork();
+        console.log(accounts);
+        console.log(networks);
+
+        if(networks.name != 'goerli'){
+            alert("Wrong chain switch to goerli testnet");
+
+            return;
         }
         else{
-            //Add Mantine modal
-            console.log("Resetiing");
-
-            //Disconnect
-            setuserDetail(prev=>{
-                return{
-                    ...prev,
-                    currentAccount: null,
-                    connectedAccount: null,
-                    chain:null,
-                }
-            });
-            setText("Connect With Metamask");
-
-
+            setCookie('WalletAddress',accounts[0],{path:'/'});
         }
-
-
+    
     }
 
     window.ethereum.on('accountsChanged',function(accounts){
         console.log(accounts, "Account changed");
-        console.log("Current User Detail: ",userDetail);
-        if(userDetail.connectedAccount != null && userDetail.connectedAccount != accounts[0]){
+        console.log("Current User Detail: ",cookies.WalletAddress);
+        if(cookies.WalletAddress != null && cookies.WalletAddress != accounts[0]){
             alert("Account changed switch back");
         }
     });
 
+    //Disconnect wallet
+    function disconnectWallet(){
+        removeCookie("WalletAddress");
 
-    useEffect(()=>{
-        console.log("User Detail: ",userDetail);
-    },[userDetail]);
+    }
 
     
     return(
         <div className="connect-Container">
 
+            {cookies.WalletAddress == undefined? <button onClick={connectWithMetamask}>Connect With Metamask</button>: <button onClick={disconnectWallet}>{cookies.WalletAddress.slice(0,12)}...</button>}
             
-            <button onClick={connectWithMetamask}> {text}</button>    
             
         </div>
     )

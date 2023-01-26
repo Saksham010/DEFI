@@ -108,7 +108,7 @@
 
 .input-amount .balance{
     /* border: 1px green solid; */
-    width: 22%;
+    width: 26%;
     font-size: 0.7em;
     color:#C1C2C6;
 
@@ -121,6 +121,7 @@
     text-align: center;
     padding-top: 2.5vh;
 }
+
 
 .addLiquidbtn{
     background-color: #7BC74D;
@@ -140,9 +141,16 @@
     
 }
 
+.addLiquidbtn a{
+    color:rgb(255, 251, 251) ;
+    text-decoration: none;
+}
+
 .addLiquidbtn:hover{
     background-color: #8add56;
     color: rgba(255, 254, 254, 0.842);
 
 
 }
+
+
