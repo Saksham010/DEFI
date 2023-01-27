@@ -85,6 +85,7 @@
     background-color:#17091F;
     color: #C1C2C6;
     border: none;
+    /* display: inline; */
 }
 .input-amount input:focus{
     outline:none ;

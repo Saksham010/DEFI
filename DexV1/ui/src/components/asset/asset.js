@@ -6,14 +6,14 @@ import { ethers } from "ethers";
 import ABI from "../../ERC20ABI.json";
 import { Link } from "react-router-dom";
 export default function Asset(props){
-    const [input1, setinput1] = useState(0);
+    const [input1, setinput1] = useState("");
     const [width,setWidth] = useState(35);
     const [inputUSDisplay,setInputUSDisplay] = useState("none");
     const inputRef = useRef(null);
     const inputUSD = useRef(null);
 
 
-    const [input2, setinput2] = useState(0);
+    const [input2, setinput2] = useState("");
     const [width2,setWidth2] = useState(35);
     const [inputUSDisplay2,setInputUSDisplay2] = useState("none");
     const inputRef2 = useRef(null);
@@ -40,7 +40,7 @@ export default function Asset(props){
             console.log("Event: ",parseFloat(event.target.value));
             if(event.target.value == ''){
                 
-                setinput1(0);
+                setinput1("");
                 setWidth(35);
                 setInputUSDisplay("none");
             }
@@ -54,13 +54,15 @@ export default function Asset(props){
                 }
     
                 setinput1(previnput =>{
-                    if(previnput < Number(event.target.value)){
+                    console.log("Prevlenght = ",previnput.length, " current length: ",event.target.value.length)
+                    if(previnput.length <= event.target.value.length){
                         setWidth(width + 8);
                     }
                     else{
+                        console.log("SHRIKINg");
                         setWidth(width - 8);
                     }
-                    return Number(event.target.value);
+                    return event.target.value;
                 })
 
 
@@ -71,12 +73,10 @@ export default function Asset(props){
         }
         else if(event.target.id == "secondinput" || event.target.id == "two"){
             setInputUSDisplay2("inline");
-            console.log("Event: ",event.target.id);
-            console.log("Event value: ",event.target.value);
-            
+   
             if(event.target.value == ''){
                 
-                setinput2(0);
+                setinput2("");
                 setWidth2(35);
                 setInputUSDisplay2("none");
             }
@@ -88,19 +88,15 @@ export default function Asset(props){
                     return;
                 }
     
-    
                 setinput2(previnput =>{
-                    console.log("PREvious input: ",previnput," and curret: ",Number(event.target.value));
-                    if(previnput < Number(event.target.value)){
+                    if(previnput.length <= event.target.value.length){
                         setWidth2(width2 + 8);
                     }
-                    else if(previnput > Number(event.target.value)){
-                        console.log("Running");
+                    else{
                         setWidth2(width2 - 8);
                     }
-                    return Number(event.target.value);
+                    return event.target.value;
                 })
-                setinput2(Number(event.target.value));
             }
             else{
                 setinput2(prev => prev);
