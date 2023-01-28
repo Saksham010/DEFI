@@ -7,6 +7,7 @@ import ABI from "../../ERC20ABI.json";
 import { Link } from "react-router-dom";
 import ARASWAPABI from "../../Araswap.json";
 
+
 export default function Asset(props){
 
     const ethImgPath = "https://res.cloudinary.com/sushi-cdn/image/fetch/f_auto,fl_sanitize,q_auto,w_48/https://raw.githubusercontent.com/sushiswap/list/master/logos/native-currency-logos/ethereum.svg";
@@ -27,14 +28,15 @@ export default function Asset(props){
     const [noARPperETH, setNoARPperETH] = useState(0);
     const provider = new ethers.providers.Web3Provider(window.ethereum);
 
-    //Set ARP rate
-    getARPprice().then((amount)=>{
-        const formatted = ethers.utils.formatUnits(amount._hex,"wei");
-        console.log("Fetched ARPproce", formatted);
-        setNoARPperETH(formatted);
-        const EthByARP = 1/formatted;
-        setARPRate(EthByARP);
-    });
+
+    // //Set ARP rate
+    // getARPprice().then((amount)=>{
+    //     const formatted = ethers.utils.formatUnits(amount._hex,"wei");
+    //     console.log("Fetched ARPproce", formatted);
+    //     setNoARPperETH(formatted);
+    //     const EthByARP = 1/formatted;
+    //     setARPRate(EthByARP);
+    // });
 
     //Get ETH price
     // fetch('https://rest.coinapi.io/v1/exchangerate/ETH/USD',{
@@ -61,6 +63,59 @@ export default function Asset(props){
     const inputRef2 = useRef(null);
     const inputUSD2 = useRef(null);
 
+    // const[balance1]
+    const [converter1,setConverter1] = useState(0);
+    const [converter2,setConverter2] = useState(0);
+
+
+    function updateConverter1(){
+        if(input1 == "ETH"){
+            setConverter1(parseFloat(input1)*1500);
+
+        }
+        else if(input1 =="ARP"){
+            const _floatARP =  parseFloat(input1);
+            const last = input1[input1.length-1];
+            const _parsedARP = last < 5? Math.floor(_floatARP): Math.ceil(_floatARP);
+
+            getEthPrice(_parsedARP).then((outputETH)=>{
+
+                const _parsedEth = ethers.utils.formatUnits(outputETH._hex,"ether");
+                const dollarValue = _parsedEth * 1500;
+                setConverter1(dollarValue)
+            })
+            
+
+        }
+    }
+    function updateConverter2(){
+        if(input2 == "ETH"){
+            setConverter2(parseFloat(input1)*1500);
+
+        }
+        else if(input2 == "ARP"){
+            const _floatARP =  parseFloat(input2);
+            const last = input2[input2.length-1];
+            const _parsedARP = last < 5? Math.floor(_floatARP): Math.ceil(_floatARP);
+
+            getEthPrice(_parsedARP).then((outputETH)=>{
+
+                const _parsedEth = ethers.utils.formatUnits(outputETH._hex,"ether");
+                const dollarValue = _parsedEth * 1500;
+                setConverter2(dollarValue)
+            })
+            
+
+        }
+
+    }
+
+    useEffect(()=>{
+        updateConverter1();
+        updateConverter2();
+        
+
+    },[input1,input2])
 
     useEffect(()=>{
         setWidth(inputRef.current.offsetWidth);
@@ -158,19 +213,30 @@ export default function Asset(props){
                 
                 //If the first box is ether
                 if(tickerSymbol1 == "ETH"){
-                    //ETH to ARP
-                    const floatETH = parseFloat(event.target.value);
-                    const arpvalue = noARPperETH * floatETH;
-                    setinput2((arpvalue).toString().slice(0,9));
-                    setInputUSDisplay2("inline");
-                    updateWidth((arpvalue).toString().slice(0,9), 2);
+
+                    getARPprice(event.target.value).then((outputARP)=>{
+                        const formattedOutput = ethers.utils.formatUnits(outputARP._hex, "wei");
+                        //ETH to ARP
+                        // const floatETH = parseFloat(event.target.value);
+                        // const arpvalue = noARPperETH * floatETH;
+
+                        setinput2((formattedOutput).toString().slice(0,9));
+                        setInputUSDisplay2("inline");
+                        updateWidth((formattedOutput).toString().slice(0,9), 2);
+                    });
                 }
-                else if(tickerSymbol1 =="ARP"){
+                else if(tickerSymbol1 =="ARP"){ 
                     const floatARP = parseFloat(event.target.value);
-                    const ethvalue = floatARP * ARPrate;
-                    setinput2(ethvalue.toString().slice(0,9));
-                    setInputUSDisplay2("inline");
-                    updateWidth(ethvalue.toString().slice(0,9),2);
+                    const lastValue = event.target.value[event.target.value.length-1];
+                    const parsedARP = lastValue < 5?Math.floor(floatARP):Math.ceil(floatARP);
+
+                    getEthPrice(parsedARP).then((outputETH)=>{
+                        const _parsedEth = ethers.utils.formatUnits(outputETH._hex,"ether");
+                        setinput2(_parsedEth.toString().slice(0,9));
+                        setInputUSDisplay2("inline");
+                        updateWidth(_parsedEth.toString().slice(0,9),2);
+                    })
+                    // const ethvalue = floatARP * ARPrate;
                 }
 
             }
@@ -183,20 +249,37 @@ export default function Asset(props){
                 }
 
                 //If the second box is ether
-                if(tickerSymbol2 == "ETH"){                    
-                    const floatETH = parseFloat(event.target.value);
-                    const arpvalue = noARPperETH * floatETH;
-                    setinput1((arpvalue).toString().slice(0,9));
-                    setInputUSDisplay("inline");
-                    updateWidth((arpvalue).toString().slice(0,12), 1);
+                if(tickerSymbol2 == "ETH"){   
+                    getARPprice(event.target.value).then((outputARP)=>{
+                        const formattedOutput = ethers.utils.formatUnits(outputARP._hex, "wei");
+                        setinput1((formattedOutput).toString().slice(0,9));
+                        setInputUSDisplay("inline");
+                        updateWidth((formattedOutput).toString().slice(0,12), 1);
+                    });                 
+                    // const floatETH = parseFloat(event.target.value);
+                    // const arpvalue = noARPperETH * floatETH;
+                    // setinput1((arpvalue).toString().slice(0,9));
+                    // setInputUSDisplay("inline");
+                    // updateWidth((arpvalue).toString().slice(0,12), 1);
 
                 }
                 else if(tickerSymbol2 == "ARP"){
+
                     const floatARP = parseFloat(event.target.value);
-                    const ethvalue = floatARP * ARPrate;
-                    setinput1(ethvalue.toString().slice(0,9));
-                    setInputUSDisplay("inline");
-                    updateWidth(ethvalue.toString().slice(0,9),1);
+                    const lastValue = event.target.value[event.target.value.length-1];
+                    const parsedARP = lastValue < 5?Math.floor(floatARP):Math.ceil(floatARP);
+
+                    getEthPrice(parsedARP).then((outputETH)=>{
+                        const _parsedEth = ethers.utils.formatUnits(outputETH._hex,"ether");
+                        setinput1(_parsedEth.toString().slice(0,9));
+                        setInputUSDisplay("inline");
+                        updateWidth(_parsedEth.toString().slice(0,9),1);
+                    })
+                    // const floatARP = parseFloat(event.target.value);
+                    // const ethvalue = floatARP * ARPrate;
+                    // setinput1(ethvalue.toString().slice(0,9));
+                    // setInputUSDisplay("inline");
+                    // updateWidth(ethvalue.toString().slice(0,9),1);
 
                 }
 
@@ -342,7 +425,8 @@ export default function Asset(props){
 
     }
 
-    async function getARPprice(){
+    //Returns ARP output token
+    async function getARPprice(value){
         const AraswapExchangeContract = new ethers.Contract("0x7726e388C25Bd96c98577dD8bBa02459CB37979e", ARASWAPABI,provider);
         
         //Getting ARP reserve of the contract
@@ -357,11 +441,34 @@ export default function Asset(props){
         // ContractEthReserve.wait();
 
         // //Calculating ouput ARP amount
-        const ARPamount = await AraswapExchangeContract.getOutputTokenAmount(ethers.utils.parseEther("1"), formattedETHReserve,formattedARPReserve);
+        const ARPamount = await AraswapExchangeContract.getOutputTokenAmount(ethers.utils.parseEther(value), formattedETHReserve,formattedARPReserve);
         // ARPamount.wait();
 
         console.log("ARP amount to be received",ethers.utils.formatUnits(ARPamount._hex,"wei"));
         return ARPamount;
+    }
+
+    //Returns ETH output token
+    async function getEthPrice(_arpToSell){
+        const AraswapExchangeContract = new ethers.Contract("0x7726e388C25Bd96c98577dD8bBa02459CB37979e", ARASWAPABI,provider);
+        
+        //Getting ARP reserve of the contract
+        const ContractARPreserve = await AraswapExchangeContract.getReserve();
+        const formattedARPReserve = ethers.utils.formatUnits(ContractARPreserve._hex,"wei");
+        // ContractARPreserve.wait();
+
+        //Getting ETH reserve of the contract
+        const ContractEthReserve =  await provider.getBalance("0x7726e388C25Bd96c98577dD8bBa02459CB37979e");
+        const formattedETHReserve = ethers.utils.formatUnits(ContractEthReserve._hex, "wei");
+        
+
+        // //Calculating ouput ARP amount
+        const ETHamount = await AraswapExchangeContract.getOutputTokenAmount(_arpToSell, formattedARPReserve,formattedETHReserve);
+        // ARPamount.wait();
+
+        console.log("ETH amount to be received",ethers.utils.formatUnits(ETHamount._hex,"ether"));
+        return ETHamount;
+
     }
 
 
@@ -372,21 +479,41 @@ export default function Asset(props){
         const ArpTokenContract = new ethers.Contract("0x9E9adC71262AB77b460e80d41Dded76dD43407e9",ABI,signer);
         const AraswapExchangeContract = new ethers.Contract("0x7726e388C25Bd96c98577dD8bBa02459CB37979e", ARASWAPABI,signer);
 
-        //Get the output amount
-        getARPprice((amountPerEth)=>{
-            console.log("Fetched amount per 1 ETH: ",amountPerEth);
-            setARPRate(amountPerEth);
+        if(tickerSymbol1 == "ETH"){
 
-        })
+            //Get the output amount
+            const minimumAmount = parseFloat(input2) - ((10/100) * parseFloat(input2)); //Just in case
 
-        // try{
+            //Swapping
+            const tx = await AraswapExchangeContract.swapFromEth(minimumAmount,{value: ethers.utils.parseEther(input1)});
+            tx.wait();
 
-        // }catch(error){
-        //     console.error(error);
-        // }
+            //Mantine
+            alert("Swap Successfull");  
+            console.log(tx);  
+        }
+        else if(tickerSymbol1 == "ARP"){
+            //Minimum eth
+            const minimumEth = parseFloat(input2) - ((10/100) * parseFloat(input2));
 
+            //Arp to sell
+            const arpToSell = input1;
+            const floatARPToSell = parseFloat(arpToSell);
+            const lastValue = arpToSell[arpToSell.length-1];
+            const parsedARP = lastValue < 5?Math.floor(floatARPToSell):Math.ceil(floatARPToSell);
 
+            //Approving txn
+            const approvetxn = await ArpTokenContract.approve("0x7726e388C25Bd96c98577dD8bBa02459CB37979e",parsedARP);
+            approvetxn.wait();
+            
+            const tx2 = await AraswapExchangeContract.swapToEth(parsedARP,minimumEth);
+            tx2.wait();
 
+            //Mamtime
+            alert("Swap successfull"); 
+            console.log(tx2);           
+    
+        }
 
     }
 
