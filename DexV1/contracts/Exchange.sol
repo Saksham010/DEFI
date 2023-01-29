@@ -29,7 +29,7 @@ contract Araswap is ERC20{
         //If the liquidity is added for the first time
         if(ARPTokenRerserve == 0){
             //Transferring token to this contract
-            ARPToken.transferFrom(msg.sender, address(this),_amount);
+            ARPToken.transferFrom(msg.sender, address(this),_amount * 10**18);
             //Since this is the first liquidity added to the pool say 100Eth: 100 ARP then total liquidity is 100 ETH
             LPTokens = ethBalance; //Payable value is updated first
             //Minting Liquidity pool token and sending to the depositor
@@ -45,7 +45,7 @@ contract Araswap is ERC20{
             require(_amount >= minimumARPTokenAmount, "Amount of token send is less than the minimum amount");
 
             //Transferring ARP Token from sender to the contract
-            ARPToken.transferFrom(msg.sender, address(this), _amount);
+            ARPToken.transferFrom(msg.sender, address(this), _amount* 10**18);
             //LP token ratio 
             LPTokens = (msg.value * totalSupply()) / ethReserve; //totalSupply => Total number of lp tokens minted
             //Minting and sending LP tokens to the msg.sender
@@ -76,7 +76,7 @@ contract Araswap is ERC20{
         //Sending ether back to user
         payable(msg.sender).transfer(ethAmount);
         //Sending ARP tokens back to the user
-        ARPToken.transfer(msg.sender,_amount);
+        ARPToken.transfer(msg.sender,_amount * 10**18);
 
         return (ethAmount,ARPTokenAmount);
     }
