@@ -6,6 +6,9 @@ import { BigNumber, ethers } from "ethers";
 import ABI from "../../ERC20ABI.json";
 import { Link } from "react-router-dom";
 import ARASWAPABI from "../../Araswap.json";
+import { Notification } from '@mantine/core';
+import { showNotification,updateNotification } from '@mantine/notifications';
+import { IconCheck,IconX } from '@tabler/icons';
 
 
 export default function Asset(props){
@@ -534,55 +537,164 @@ export default function Asset(props){
 
     //Swap Tokens
     async function SwapTokens(){
-        const signer  = provider.getSigner();
-        console.log("Signer: ",signer);
-        //Contract instance
-        const ArpTokenContract = new ethers.Contract("0x9E9adC71262AB77b460e80d41Dded76dD43407e9",ABI,signer);
-        const AraswapExchangeContract = new ethers.Contract("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133", ARASWAPABI,signer);
 
-        if(tickerSymbol1 == "ETH"){
+        //Check if the amount is greater than balance or not
+        if(parseFloat(input1) >= parseFloat(balance1)){
 
-            //Get the output amount
-
-            console.log("upper check");
-            const minimumAmount = parseFloat(input2.slice(0,9)) - (0.1 * parseFloat(input2.slice(0,9))); //Just in case
-            const roundedMnimumAmount = roundOff(minimumAmount.toString());
-            console.log("Rounded ARP: ",roundedMnimumAmount);
-            //Swapping
-            const tx = await AraswapExchangeContract.swapFromEth(Number(roundedMnimumAmount),{
-                value: ethers.utils.parseEther(input1.slice(0,9)),
-                gasLimit: 150008
+            console.log("whsowing notification");
+            showNotification({
+                title: 'Oopise 🤥',
+                message: "The amount you're trying to sell is greater than your balance",
+                color:'red',
+                disallowClose:true,
+                style: { 
+                    backgroundColor: "#202231",
+                },
+                styles: (theme)=>({
+                    root: {
+                        borderColor:"#202231",
+        
+                    },
+                    title:{color:theme.white},
+                })
             });
-            tx.wait();
-
-            // //Mantine
-            alert("Swap Successfull");  
-            console.log(tx);  
+            return;
         }
-        else if(tickerSymbol1 == "ARP"){
-            //Minimum eth
-            const minimumEth = parseFloat(input2) - (0.1 * parseFloat(input2));
-            const parsedMinimumETH = ethers.utils.parseEther(minimumEth.toString(), "wei");
 
-            //Arp to sell
-            const roundedARP = roundOff(input1);
-            const bigARP = ethers.BigNumber.from(roundedARP.toString());
-            const big10 = ethers.BigNumber.from("10");
-            const big18 = ethers.BigNumber.from("18");
-            const bigMultiple = big10.pow(big18);
-            const _parsedRounedArp = bigARP.mul(bigMultiple);
-
-            //Approving txn
-            const approvetxn = await ArpTokenContract.approve("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133",_parsedRounedArp);
-            approvetxn.wait();
-            
-            const tx2 = await AraswapExchangeContract.swapToEth(Number(roundedARP),parsedMinimumETH);
-            tx2.wait();
-
-            //Mamtime
-            alert("Swap successfull"); 
-            console.log(tx2);           
+        //Showing notification
+        showNotification({
+            id: "swap",
+            loading:true,
+            title: 'Swapping 🤥',
+            message: "Please wait till tokens are swapped",
+            color:'teal',
+            disallowClose:true,
+            style: { 
+                backgroundColor: "#202231",
+            },
+            styles: (theme)=>({
+                root: {
+                    borderColor:"#202231",
     
+                },
+                title:{color:theme.white},
+            }),
+            autoClose:false, 
+        });
+
+        try{
+            const signer  = provider.getSigner();
+            console.log("Signer: ",signer);
+            //Contract instance
+            const ArpTokenContract = new ethers.Contract("0x9E9adC71262AB77b460e80d41Dded76dD43407e9",ABI,signer);
+            const AraswapExchangeContract = new ethers.Contract("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133", ARASWAPABI,signer);
+
+            if(tickerSymbol1 == "ETH"){
+
+                //Get the output amount
+
+                console.log("upper check");
+                const minimumAmount = parseFloat(input2.slice(0,9)) - (0.1 * parseFloat(input2.slice(0,9))); //Just in case
+                const roundedMnimumAmount = roundOff(minimumAmount.toString());
+                console.log("Rounded ARP: ",roundedMnimumAmount);
+                //Swapping
+                const tx = await AraswapExchangeContract.swapFromEth(Number(roundedMnimumAmount),{
+                    value: ethers.utils.parseEther(input1.slice(0,9)),
+                    gasLimit: 150008
+                });
+                tx.wait();
+
+                // //Mantine
+                updateNotification({
+                    id:"swap",
+                    color: 'teal',
+                    title: 'Swap successfull',
+                    message: 'Tokens have been successfully swapped',
+                    icon: <IconCheck size={16} />,
+                    autoClose: 2000,
+                    disallowClose: true,
+                    style: { 
+                        backgroundColor: "#202231",
+                    },
+                    styles: (theme)=>({
+                        root: {
+                            borderColor:"#202231",
+            
+                        },
+                        title:{color:theme.white},
+                    }),
+                });
+                // alert("Swap Successfull");  
+                console.log(tx);  
+            }
+            else if(tickerSymbol1 == "ARP"){
+                //Minimum eth
+                const minimumEth = parseFloat(input2) - (0.1 * parseFloat(input2));
+                const parsedMinimumETH = ethers.utils.parseEther(minimumEth.toString(), "wei");
+
+                //Arp to sell
+                const roundedARP = roundOff(input1);
+                const bigARP = ethers.BigNumber.from(roundedARP.toString());
+                const big10 = ethers.BigNumber.from("10");
+                const big18 = ethers.BigNumber.from("18");
+                const bigMultiple = big10.pow(big18);
+                const _parsedRounedArp = bigARP.mul(bigMultiple);
+
+                //Approving txn
+                const approvetxn = await ArpTokenContract.approve("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133",_parsedRounedArp);
+                approvetxn.wait();
+                
+                const tx2 = await AraswapExchangeContract.swapToEth(Number(roundedARP),parsedMinimumETH);
+                tx2.wait();
+
+                // //Mantine
+                updateNotification({
+                    id:"swap",
+                    color: 'teal',
+                    title: 'Swap successfull',
+                    message: 'Tokens have been successfully swapped',
+                    icon: <IconCheck size={16} />,
+                    autoClose: 2000,
+                    disallowClose: true,
+                    style: { 
+                        backgroundColor: "#202231",
+                    },
+                    styles: (theme)=>({
+                        root: {
+                            borderColor:"#202231",
+            
+                        },
+                        title:{color:theme.white},
+                    }),
+                });
+                console.log(tx2);           
+        
+            }
+        }
+        catch(error){   
+
+        // //Mantine
+            updateNotification({
+                id:"swap",
+                color: 'red',
+                title: 'Oopsie',
+                message: 'Error occured try again',
+                icon: <IconX size={16} />,
+                autoClose: 2000,
+                disallowClose: true,
+                style: { 
+                    backgroundColor: "#202231",
+                },
+                styles: (theme)=>({
+                    root: {
+                        borderColor:"#202231",
+        
+                    },
+                    title:{color:theme.white},
+                }),
+        });
+
+
         }
 
     }
@@ -643,6 +755,7 @@ export default function Asset(props){
                 {cookies.WalletAddress == undefined ? <Link to='/connect'><button className="addLiquidbtn"> Connect Wallet</button></Link>:<button className="addLiquidbtn" onClick={props.type == "Swap"?SwapTokens:AddLiquidity}>{props.type == "Swap"? "Swap":"Add Liquidity"}</button> }
             </div>
 
+  
         </div>
 
     )

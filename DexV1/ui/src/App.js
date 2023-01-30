@@ -8,6 +8,8 @@ import Navbar from './components/navbar/navbar';
 import AddLiquidity from './components/addLiquidity/addLiquidity';
 import {useCookies} from "react-cookie";
 import {ethers} from "ethers";
+
+
 function App() {
 
   //Cookies
@@ -24,8 +26,6 @@ function App() {
         return null;
       })
   }
-  
-
 
   return (
 
@@ -34,11 +34,12 @@ function App() {
       <Navbar />
 
       <Routes>
-        <Route path='/' element={<Homepage />} />
+        <Route path='/' element={<Homepage/>} />
         <Route  path='/connect' element={<Connect />} />
         <Route path='/add' element={<AddLiquidity />} />
 
       </Routes>
+
 
 
     </div>

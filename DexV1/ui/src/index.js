@@ -5,15 +5,25 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { BrowserRouter } from 'react-router-dom';
 import { CookiesProvider } from 'react-cookie';
+import { MantineProvider } from '@mantine/core';
+import { NotificationsProvider } from '@mantine/notifications';
+
+
 
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <BrowserRouter>
-    <CookiesProvider>
-      <App />
-    </CookiesProvider>
-  </BrowserRouter>
+  <MantineProvider withGlobalStyles withNormalizeCSS>
+    <NotificationsProvider>
+
+      <BrowserRouter>
+        <CookiesProvider>
+          <App />
+        </CookiesProvider>
+      </BrowserRouter>
+
+    </NotificationsProvider>
+  </MantineProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

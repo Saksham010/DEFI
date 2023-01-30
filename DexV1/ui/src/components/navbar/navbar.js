@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import "./navbar.css";
 import logo from "./Araswap.png";
 import { useCookies } from "react-cookie";
+import { showNotification } from "@mantine/notifications";
 
 export default function Navbar(){
 
@@ -9,6 +10,23 @@ export default function Navbar(){
     const [cookies,setCookie,removeCookie] = useCookies(['WalletAddress']);
 
     function disconnectWallet(){
+        //Notification
+        showNotification({
+            title:"Disconnected",
+            message:"Wallet has been disconnected successfully",
+            disallowClose:true,
+            color:'red',
+            style: { 
+                backgroundColor: "#202231",
+            },
+            styles: (theme)=>({
+                root: {
+                    borderColor:"#202231",
+    
+                },
+                title:{color:theme.white},
+            }),
+        })
         removeCookie("WalletAddress");
 
     }
