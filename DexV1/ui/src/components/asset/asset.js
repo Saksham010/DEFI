@@ -436,23 +436,29 @@ export default function Asset(props){
                 const arp = tickerSymbol1 =="ARP"?parseFloat(input1.slice(0,7)):parseFloat(input2.slice(0,7));
 
                 if(_formattedMinimum > arp ){
-                    showNotification({
-                        title: 'Oopise 🤥',
-                        message: `Minimum ${Math.ceil(_formattedMinimum)} ARP is required for that eth amount. Try again with higher ARP amount`,
-                        color:'red',
-                        disallowClose:true,
-                        style: { 
-                            backgroundColor: "#202231",
-                        },
-                        styles: (theme)=>({
-                            root: {
-                                borderColor:"#202231",
+                    // showNotification({
+                    //     title: 'Oopise 🤥',
+                    //     message: `Minimum ${Math.ceil(_formattedMinimum)} ARP is required for that eth amount. Try again with higher ARP amount`,
+                    //     color:'red',
+                    //     disallowClose:true,
+                    //     style: { 
+                    //         backgroundColor: "#202231",
+                    //     },
+                    //     styles: (theme)=>({
+                    //         root: {
+                    //             borderColor:"#202231",
                 
-                            },
-                            title:{color:theme.white},
-                        }),
-                    });
-                    throw new Error("Not enough ARP amount");
+                    //         },
+                    //         title:{color:theme.white},
+                    //     }),
+                    // });
+                    
+
+                    // return new Promise((resolve, reject) => {
+                    //     reject(new Error(`Minimum ${Math.ceil(_formattedMinimum)} ARP is required for that eth amount. Try again with higher ARP amount`));
+                    //   });
+                    return Promise.resolve("Hello");
+
                 }
                 else{
                     showNotification({
@@ -501,6 +507,40 @@ export default function Asset(props){
             }else if(parseFloat(_arp) > _arpBalance){
                 throw new Error("Not enough ARP balance");
             }
+
+               //Liquidity checks
+            const AraswapExchangeContract = new ethers.Contract("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133", ARASWAPABI,provider);
+            const _ethReserve = await provider.getBalance("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133");
+            const _arpReserve = await AraswapExchangeContract.getReserve();
+        
+            const _ETH = ethers.utils.parseEther(_ethAmount);
+            const _minimumRequired = (_arpReserve.mul(_ETH)).div(_ethReserve);
+            const _formattedMinimum = ethers.utils.formatUnits(_minimumRequired._hex, "ether");
+            const arp = tickerSymbol1 === "ARP" ? parseFloat(input1.slice(0, 7)) : parseFloat(input2.slice(0, 7));
+        
+            if (_formattedMinimum > arp) {
+              throw new Error(`${Math.ceil(_formattedMinimum)} ARP is required for that eth amount. Try again with higher ARP amoun`);
+            } else {
+              showNotification({
+                id: 'liquid',
+                title: 'Adding liquidity',
+                message: `Please wait until the liquidity has been added to the pool`,
+                color: 'teal',
+                disallowClose: true,
+                loading: true,
+                style: {
+                  backgroundColor: "#202231",
+                },
+                styles: (theme) => ({
+                  root: {
+                    borderColor: "#202231",
+                  },
+                  title: { color: theme.white },
+                }),
+                autoClose: false,
+              });
+            }
+
         }catch(err){
             showNotification({
                 title: 'Error 🤥',
@@ -518,15 +558,11 @@ export default function Asset(props){
                     title:{color:theme.white},
                 }),
             });
-            return;
-        
+            return;          
         }
-            
-        try{
 
-            //Liquidity checks
-            getLiquidityData(_ethAmount);
-                
+        try{
+                               
             console.log("Add liquidity running");
             const signer  = provider.getSigner();
             
@@ -579,6 +615,7 @@ export default function Asset(props){
                 
         }
         catch(error){
+            console.log("Outer catch");
             updateNotification({
                 id:'liquid',
                 title: 'Error 🤥',
@@ -597,6 +634,7 @@ export default function Asset(props){
                 }),
             });
             console.error(error);
+            return;
         }
 
     }
