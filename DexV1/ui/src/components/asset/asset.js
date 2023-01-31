@@ -424,17 +424,116 @@ export default function Asset(props){
 
     //Smart contract interaction
 
+    //Get liquidity data
+    function getLiquidityData(ethAmount){
+        const AraswapExchangeContract = new ethers.Contract("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133", ARASWAPABI,provider);
+        provider.getBalance("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133").then((_ethReserve)=>{
+           AraswapExchangeContract.getReserve().then((_arpReserve)=>{
+                // const _ethAmount =  ethers.BigNumber.from(ethAmount);
+                const _ethAmount = ethers.utils.parseEther(ethAmount);
+                const _minimumRequired = (_arpReserve.mul(_ethAmount)).div(_ethReserve);
+                const _formattedMinimum = ethers.utils.formatUnits(_minimumRequired._hex,"ether");
+                const arp = tickerSymbol1 =="ARP"?parseFloat(input1.slice(0,7)):parseFloat(input2.slice(0,7));
+
+                if(_formattedMinimum > arp ){
+                    showNotification({
+                        title: 'Oopise 🤥',
+                        message: `Minimum ${Math.ceil(_formattedMinimum)} ARP is required for that eth amount. Try again with higher ARP amount`,
+                        color:'red',
+                        disallowClose:true,
+                        style: { 
+                            backgroundColor: "#202231",
+                        },
+                        styles: (theme)=>({
+                            root: {
+                                borderColor:"#202231",
+                
+                            },
+                            title:{color:theme.white},
+                        }),
+                    });
+                    throw new Error("Not enough ARP amount");
+                }
+                else{
+                    showNotification({
+                        id:'liquid',
+                        title: 'Adding liquidity',
+                        message: `Please wait until the liquidity has been added to the pool`,
+                        color:'teal',
+                        disallowClose:true,
+                        loading:true,
+                        style: { 
+                            backgroundColor: "#202231",
+                        },
+                        styles: (theme)=>({
+                            root: {
+                                borderColor:"#202231",
+                
+                            },
+                            title:{color:theme.white},
+                        }),
+                        autoClose:false,
+                    });
+
+                }
+
+            });
+        });
+    }
+
     //Add liquidity
     async function AddLiquidity(){
-        console.log("Add liquidity running");
-        const signer  = provider.getSigner();
-        //Contract instance
-        const ArpTokenContract = new ethers.Contract("0x9E9adC71262AB77b460e80d41Dded76dD43407e9",ABI,signer);
-        const AraswapExchangeContract = new ethers.Contract("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133", ARASWAPABI,signer);
-
-        //Adding liquidity
-
+        
+        //Amount and input balance
+        const _ethAmount = tickerSymbol1 == "ETH"? input1.slice(0,7):input2.slice(0,7);
+        const _ethBalance = tickerSymbol1 =="ETH"?balance1:balance2;
+        const _arp = tickerSymbol1 =="ARP"?input1.slice(0,7):input2.slice(0,7);
+        const _arpBalance = tickerSymbol1 == "ARP"?balance1:balance2;
+        
+        //Balance check
         try{
+            if(input1 == "" || input2 ==""){
+                throw new Error("Empty field");
+
+            }
+            else if(parseFloat(_ethAmount) > _ethBalance ){
+                throw new Error("Not enough Eth balance");
+            }else if(parseFloat(_arp) > _arpBalance){
+                throw new Error("Not enough ARP balance");
+            }
+        }catch(err){
+            showNotification({
+                title: 'Error 🤥',
+                message: `${err.message}`,
+                color:'red',
+                disallowClose:true,
+                style: { 
+                    backgroundColor: "#202231",
+                },
+                styles: (theme)=>({
+                    root: {
+                        borderColor:"#202231",
+        
+                    },
+                    title:{color:theme.white},
+                }),
+            });
+            return;
+        
+        }
+            
+        try{
+
+            //Liquidity checks
+            getLiquidityData(_ethAmount);
+                
+            console.log("Add liquidity running");
+            const signer  = provider.getSigner();
+            
+            //Contract instance
+            const ArpTokenContract = new ethers.Contract("0x9E9adC71262AB77b460e80d41Dded76dD43407e9",ABI,signer);
+            const AraswapExchangeContract = new ethers.Contract("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133", ARASWAPABI,signer);
+            //Adding liquidity
 
             //Parsing ARPtoken
             const ArpTokenAmount = tickerSymbol1 == "ETH"?input2:input1;
@@ -450,8 +549,7 @@ export default function Asset(props){
             //Parsing Ether to BigNumber 
             const etherAmount = tickerSymbol1 =="ETH"?input1:input2;
             const parsedEther = ethers.utils.parseEther(etherAmount);
-    
-    
+        
             //Calling function
 
             const approveTransaction = await ArpTokenContract.approve("0x02A011A6Ce08d22c82Cf7a564e0AD86FC7129133",bigARP.mul(bigMultiple));
@@ -459,11 +557,45 @@ export default function Asset(props){
             console.log(approveTransaction);
 
             const LPTokens = await AraswapExchangeContract.addLiquidity(Number(parsedARP), {value: parsedEther,gasLimit: 150008});
+            await LPTokens.wait();
+            console.log("Liqudity added",LPTokens);
+            updateNotification({
+                id:'liquid',
+                title: 'Transaction successfull 🤥',
+                message: `Liquidity has been successfully added`,
+                color:'teal',
+                disallowClose:true,
+                style: { 
+                    backgroundColor: "#202231",
+                },
+                styles: (theme)=>({
+                    root: {
+                        borderColor:"#202231",
+        
+                    },
+                    title:{color:theme.white},
+                }),
+            });
                 
-            return LPTokens;
-
         }
         catch(error){
+            updateNotification({
+                id:'liquid',
+                title: 'Error 🤥',
+                message: `${error.message}`,
+                color:'red',
+                disallowClose:true,
+                style: { 
+                    backgroundColor: "#202231",
+                },
+                styles: (theme)=>({
+                    root: {
+                        borderColor:"#202231",
+        
+                    },
+                    title:{color:theme.white},
+                }),
+            });
             console.error(error);
         }
 
@@ -539,7 +671,29 @@ export default function Asset(props){
     async function SwapTokens(){
 
         //Check if the amount is greater than balance or not
-        if(parseFloat(input1) >= parseFloat(balance1)){
+
+        if(input1 == "" || input2 ==""){
+            showNotification({
+                title: 'Oopise 🤥',
+                message: "Empty field spotted",
+                color:'red',
+                disallowClose:true,
+                style: { 
+                    backgroundColor: "#202231",
+                },
+                styles: (theme)=>({
+                    root: {
+                        borderColor:"#202231",
+        
+                    },
+                    title:{color:theme.white},
+                })
+            });
+            return;
+
+        }
+        
+        else if(parseFloat(input1) >= parseFloat(balance1)){
 
             console.log("whsowing notification");
             showNotification({
@@ -610,7 +764,6 @@ export default function Asset(props){
                     color: 'teal',
                     title: 'Swap successfull',
                     message: 'Tokens have been successfully swapped',
-                    icon: <IconCheck size={16} />,
                     autoClose: 2000,
                     disallowClose: true,
                     style: { 
@@ -653,7 +806,6 @@ export default function Asset(props){
                     color: 'teal',
                     title: 'Swap successfull',
                     message: 'Tokens have been successfully swapped',
-                    icon: <IconCheck size={16} />,
                     autoClose: 2000,
                     disallowClose: true,
                     style: { 
@@ -679,7 +831,6 @@ export default function Asset(props){
                 color: 'red',
                 title: 'Oopsie',
                 message: 'Error occured try again',
-                icon: <IconX size={16} />,
                 autoClose: 2000,
                 disallowClose: true,
                 style: { 
