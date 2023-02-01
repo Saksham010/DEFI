@@ -1,0 +1,3 @@
+[submodule "DexV2/lib/solmate"]
+	path = DexV2/lib/solmate
+	url = https://github.com/rari-capital/solmate
