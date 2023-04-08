@@ -3,6 +3,8 @@ pragma solidity ^0.8.13;
 
 import "../../lib/solmate/src/tokens/ERC20.sol";
 import "../../lib/Math.sol";
+// import "./libraries/UQ112x112.sol";
+
 
 interface IERC20 {
     function balanceOf(address) external returns (uint256);
@@ -11,6 +13,8 @@ interface IERC20 {
 }
 
 contract AraswapV2Pair is ERC20,Math{
+    using UQ112x112 for uint224;
+
     uint256 constant MINIMUM_LIQUIDITY = 1000;
 
     //Address of the token pairs
@@ -37,6 +41,15 @@ contract AraswapV2Pair is ERC20,Math{
 
     //Constructor for LP pair token
     constructor(address _token0, address _token1)ERC20("AraswapV2 Pair","ARPV2",18){
+        token0 = _token0;
+        token1 = _token1;
+    }
+
+    // Initialize pair
+    function initialize(address _token0, address _token1)public{
+        if(token0 != address(0) || token1!= address(0)){
+            revert("Already initialized");
+        }
         token0 = _token0;
         token1 = _token1;
     }
