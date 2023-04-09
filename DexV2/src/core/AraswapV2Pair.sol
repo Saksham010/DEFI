@@ -36,7 +36,7 @@ contract AraswapV2Pair is ERC20,Math{
     // Events
     event Mint(address indexed sender,uint256 amount0,uint256 amount1);
     event Sync(uint112 reserve0,uint112 reserve1);
-    event Burn(address indexed sender, uint256 amount0, uint256 amount1);
+    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address to);
     event Swap(address indexed sender, uint256 amount0out, uint256 amount1out,address to);
 
     //Constructor for LP pair token
@@ -122,25 +122,25 @@ contract AraswapV2Pair is ERC20,Math{
     }
 
     // Removing liquidity 
-    function burn() public{
+    function burn(address to) public  returns (uint256 amount0, uint256 amount1){
         // Get the latest reserve
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
         uint256 balance1 = IERC20(token1).balanceOf(address(this));
-        uint256 liquidity = balanceOf[msg.sender];  //Amount of LP tokens held by the user
+        uint256 liquidity = balanceOf[address(this)];  //Amount of LP tokens held by the user. (User send lp to Router -> Pair -> Burn)
         // Amount of token that user should get
-        uint256 amount0 =  (balance0 * liquidity)/totalSupply;
-        uint256 amount1 = (balance1 * liquidity)/totalSupply;
+        amount0 =  (balance0 * liquidity)/totalSupply;
+        amount1 = (balance1 * liquidity)/totalSupply;
 
         if(amount0 <= 0 || amount1 <= 0){
             revert("Insufficient liquidity burn amount");
         }
 
         //Burning liquidity
-        _burn(msg.sender,liquidity);
+        _burn(address(this),liquidity);
 
         //Transferring the token amounts
-        _safeTransfer(token0,msg.sender,amount0);
-        _safeTransfer(token1,msg.sender,amount1);
+        _safeTransfer(token0,to,amount0);
+        _safeTransfer(token1,to,amount1);
 
         // Getting latest reserve and updating it
         balance0 = IERC20(token0).balanceOf(address(this));
@@ -148,7 +148,7 @@ contract AraswapV2Pair is ERC20,Math{
 
         _update(balance0,balance1);
 
-        emit Burn(msg.sender,amount0,amount1);
+        emit Burn(msg.sender,amount0,amount1,to);
 
     }
 

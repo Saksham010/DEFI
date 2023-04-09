@@ -9,6 +9,7 @@ interface IAraswapV2Factory{
 }
 interface IAraswapPair{
     function mint(address) external returns(uint256);
+    function transferFrom(address,address,uint256)external;
 }
 
 contract AraswapV2Router{
@@ -94,6 +95,41 @@ contract AraswapV2Router{
             revert SafeTransferFailed();
     }
 
+    // Remove liquidity
+    function removeLiquidity(address tokenA, address tokenB,uint256 liquidity,uint256 minA, uint256 minB, address to) public{
+
+        // Find pair address
+        address pairAddress = AraswapV2Library.pairFor(address(factory),tokenA,tokenB);
+
+        // Send LP tokens from User to pair contract to burn the LP tokens
+        IAraswapPair(pairAddress).transferFrom(msg.sender,pairAddress,liquidity);
+        // Calling burn function
+        (uint256 amount0, uint256 amount1) = IAraswapPair(pairAddress).burn(to);
+
+        // Check if the amount received by the user is greater than minimum tokens or not
+        if(amount0 < minA || amount1 < minB){
+            revert("Insufficient amount to receive while removing liquidity");
+        }
+
+    }
+
+
+    // Get output amount
+    function getOutputAmount(uint256 reserveIn, uint256 reserveOut, uint256 amountIn) public returns(uint256 outAmount) {
+
+        // Assuming 0.3% fee, r = 1-fees = 1-3% ==> 0.97
+        //  input amount with fees => input amount * r => inputamount * 0.97
+
+        // In basis point calculation, input with fees => input * 997
+        uint256 inputWithFees = amountIn *997;
+        uint256 numerator = reserveOut * inputWithFees;
+        uint256 denominator = (reserveIn*1000) + inputWithFees;
+
+        // Equivalent to : OutputAmount = (reserveout * originalinputwithFees * 1000) / (reservein + originalinputwithFees) * 1000;
+
+        outAmount = numerator/denominator;
+
+    }
 
 
 
