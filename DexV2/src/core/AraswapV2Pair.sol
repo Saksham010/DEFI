@@ -89,7 +89,7 @@ contract AraswapV2Pair is ERC20,Math{
     }
 
     //Mint LP tokens
-    function mint() public{
+    function mint(address to) public returns(uint256){
 
         (uint112 _reserve0, uint112 _reserve1) = getReserves();
         uint256 balance0 = IERC20(token0).balanceOf(address(this));
@@ -113,9 +113,11 @@ contract AraswapV2Pair is ERC20,Math{
         }
 
         // Minting LP tokens to the lp provider
-        _mint(msg.sender,liquidity);
+        _mint(to,liquidity);
         _update(balance0,balance1);
-        emit Mint(msg.sender,amount0,amount1);
+        emit Mint(to,amount0,amount1);
+
+        return liquidity;
         
     }
 
