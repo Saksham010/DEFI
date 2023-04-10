@@ -11,6 +11,9 @@ interface IERC20 {
 
     function transfer(address to, uint256 amount) external;
 }
+interface IFlashLoanBorrower{
+    function LoanRepay(address,uint256,uint256,bytes calldata)external;
+}
 
 contract AraswapV2Pair is ERC20,Math{
     using UQ112x112 for uint224;
@@ -31,6 +34,17 @@ contract AraswapV2Pair is ERC20,Math{
     // Price calculation
     uint256 public price0CumulativeLast;
     uint256 public price1CumulativeLast;
+
+    // Re-entrancy guard
+    bool private isEntered;
+
+    modifier nonReentrant() {
+        require(isEntered == false);
+        isEntered = true;
+        _;
+
+        isEntered = false;
+    }
 
 
     // Events
@@ -153,7 +167,7 @@ contract AraswapV2Pair is ERC20,Math{
     }
 
     // Swap
-    function swap(amount0out, amount1out, to) public{
+    function swap(uint256 amount0out, uint256 amount1out, address to, bytes calldata data) public nonReentrant{
 
         //Output amount checks
         if(amount0out <=0 || amount1out <=0){
@@ -174,6 +188,12 @@ contract AraswapV2Pair is ERC20,Math{
         }
         if(amount1 > 0 ){
             _safeTransfer(token1,to,amount1out);
+        }
+
+        // Flashloan repay
+        if(data.length > 0){
+            // Call repay function
+            IFlashLoanBorrower(to).LoanRepay(msg.sender,amount0out,amount1out,data);
         }
 
         // balance of the contract after swap
