@@ -45,6 +45,46 @@ library AraswapV2Library {
 
         optimalAmount = (amountIn*reserveOut) / reserveIn;
     }
+
+
+    // Get output amount
+    function getOutputAmount(uint256 reserveIn, uint256 reserveOut, uint256 amountIn) public returns(uint256 outAmount) {
+
+        // Assuming 0.3% fee, r = 1-fees = 1-3% ==> 0.97
+        //  input amount with fees => input amount * r => inputamount * 0.97
+
+        // In basis point calculation, input with fees => input * 997
+        uint256 inputWithFees = amountIn *997;
+        uint256 numerator = reserveOut * inputWithFees;
+        uint256 denominator = (reserveIn*1000) + inputWithFees;
+
+        // Equivalent to : OutputAmount = (reserveout * originalinputwithFees * 1000) / (reservein + originalinputwithFees) * 1000;
+
+        outAmount = numerator/denominator;
+
+    }
+
+    // Get outputAmountList
+    function getOutList(address factory, uint256 amountIn, address[] memory path) public returns(uint256[] memory){
+
+        // Check if the path is less than two then now valid swap, ie [tokenA,] =  tokenA -> ??? 
+        if(path.length < 2){
+            revert("Invalid swap, path lenght not sufficient");
+        }
+
+        // Array to save output list
+        uint256[] memory ouputList = new uint256[](path.length);
+
+        // Saving first input amount in output list
+        outputList[0] = amountIn;
+
+        for(uin256 i =0; i < path.length-1; i++){
+            (uint112 r0, uint112 r1) = getReserves(factory,path[i],path[i+1]);
+            ouputList[i+1] = getOutputAmount(uint256(r0),uint256(r1),ouputList[i]);
+        }
+
+        return outputList;
+    }
 }
 
 

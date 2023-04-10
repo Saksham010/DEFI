@@ -77,24 +77,6 @@ contract AraswapV2Router{
         
     }
 
-    function _safeTransferFrom(
-        address token,
-        address from,
-        address to,
-        uint256 value
-    ) private {
-        (bool success, bytes memory data) = token.call(
-            abi.encodeWithSignature(
-                "transferFrom(address,address,uint256)",
-                from,
-                to,
-                value
-            )
-        );
-        if (!success || (data.length != 0 && !abi.decode(data, (bool))))
-            revert SafeTransferFailed();
-    }
-
     // Remove liquidity
     function removeLiquidity(address tokenA, address tokenB,uint256 liquidity,uint256 minA, uint256 minB, address to) public{
 
@@ -114,24 +96,70 @@ contract AraswapV2Router{
     }
 
 
-    // Get output amount
-    function getOutputAmount(uint256 reserveIn, uint256 reserveOut, uint256 amountIn) public returns(uint256 outAmount) {
+    // Token to token
+    function swapExactTokensForTokens(uint256 inamount, uint256 outAmountMin, address[] calldata path, address to) public returns(uint256[] memory amounts){
 
-        // Assuming 0.3% fee, r = 1-fees = 1-3% ==> 0.97
-        //  input amount with fees => input amount * r => inputamount * 0.97
+        // Amounts array of each swap in a chain
+        amounts = AraswapV2Library.getOutList(address(factory), inamount,path);
 
-        // In basis point calculation, input with fees => input * 997
-        uint256 inputWithFees = amountIn *997;
-        uint256 numerator = reserveOut * inputWithFees;
-        uint256 denominator = (reserveIn*1000) + inputWithFees;
+        // Check if the final ouput of the chained swap is greater or equals to minmum ouptut amount
+        if(amounts[amounts.length-1] < outAmountMin){
+            revert("Insufficient ouput");
+        }
 
-        // Equivalent to : OutputAmount = (reserveout * originalinputwithFees * 1000) / (reservein + originalinputwithFees) * 1000;
+        // If the amount satisfies the minimum requirement -> Transfer it to the pair contract
+        _safeTransferFrom(path[0],
+                        msg.sender,
+                        AraswapV2Library.pairFor(address(factory),path[0],path[1]),
+                        amounts[0]);
 
-        outAmount = numerator/denominator;
+        // Swapping tokens
+        _swap(amounts,path,to);
+
+    }
+
+    // Swap function
+    function _swap(uint256[] memory amounts,uint256[] memory path,address to) internal{
+        
+        for(uint256 i; i < path.length-1;i++){
+            (address tokenin,address tokenout)=(path[i],path[i+1]);
+
+            // Sorting these tokens
+            (address token0, address token1) = AraswapV2Library.sortTokens(tokenin,tokenout);
+        
+            // Calculate ouput amount for the swap (since first index stores input amount)
+            uint256 amountOut = amounts[i+1];
+
+            //Since there is no direction of swap we send in the amounts we dont want to get by 0 and amount we want by given ouputamount 
+            (uint256 out0, uint256 out1) = token0 == tokenin?(uint256(0),amountOut): (amountOut,uint256(0));
+
+            // If this is intermediate swap the dest address should be the next pair because the next pair is gonna perform the swap.
+            //If this is the final swap the dest should be the caller
+            address _to = i == (path.length - 2) ? to: AraswapV2Library.pairFor(address(factory),tokenout,path[i+2]);
+            
+            // Swap tokens
+            IAraswapPair(AraswapV2Library.pairFor(address(factory),tokenin,tokenout)).swap(out0,out1,_to);
+        }
 
     }
 
 
-
-
+    // Safe transfer
+    function _safeTransferFrom(
+        address token,
+        address from,
+        address to,
+        uint256 value
+    ) private {
+        (bool success, bytes memory data) = token.call(
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                from,
+                to,
+                value
+            )
+        );
+        if (!success || (data.length != 0 && !abi.decode(data, (bool))))
+            revert SafeTransferFailed();
+    }
 }
