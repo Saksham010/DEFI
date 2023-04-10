@@ -96,7 +96,7 @@ contract AraswapV2Router{
     }
 
 
-    // Token to token
+    // Token to token (exact -> unknown)
     function swapExactTokensForTokens(uint256 inamount, uint256 outAmountMin, address[] calldata path, address to) public returns(uint256[] memory amounts){
 
         // Amounts array of each swap in a chain
@@ -116,6 +116,25 @@ contract AraswapV2Router{
         // Swapping tokens
         _swap(amounts,path,to);
 
+    }
+
+    // Token to token (unknown -> Exact)
+    function swapTokensForExactTokens(uint256 outamount,uint256 inAmountMax,address[] calldata path, address to) public returns(uint256[] memory amounts){
+        //Input amounts
+        amounts = AraswapV2Library.getInList(address(factory),outamount,path);
+
+        if (amounts[0] > amountInMax){
+            revert("Excess input amount");
+        }
+
+        // Transfer token from sender to pair contract
+        _safeTransferFrom(path[0],
+                        msg.sender,
+                        AraswapV2Library.pairFor(address(factory),path[0],path[1],
+                        amounts[0]);
+
+        // Swap tokens
+        _swap(amounts,path,to);
     }
 
     // Swap function

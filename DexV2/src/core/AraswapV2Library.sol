@@ -47,10 +47,10 @@ library AraswapV2Library {
     }
 
 
-    // Get output amount
+    // Get output amount for known input amount
     function getOutputAmount(uint256 reserveIn, uint256 reserveOut, uint256 amountIn) public returns(uint256 outAmount) {
 
-        // Assuming 0.3% fee, r = 1-fees = 1-3% ==> 0.97
+        // Assuming 0.3% fee, r = 1-fees = 1-3% ==> 0.997
         //  input amount with fees => input amount * r => inputamount * 0.97
 
         // In basis point calculation, input with fees => input * 997
@@ -85,6 +85,42 @@ library AraswapV2Library {
 
         return outputList;
     }
+
+    // Get input amount for known output amount (Inverted swapping)
+    // Same fee dynamics as getOutputAmount
+    function getInputAmount(uint256 reserveIn, uint256 reserveOut,uint256 outputAmount) public pure returns(uint256 inputAmount){
+        //Basis point calculation
+        //r = 997
+        uint256 numerator = reserveIn * outputAmount * 1000;
+        uint256 denominator = (reserveOut - outputAmount) * 997;
+
+        //Since the input calculted should result in output, the integer division will round down so adding 1 will result in input
+        //that will give greator or equal output amount
+        inputAmount = (numerator/denominator) + 1;
+    }
+    
+    // Get inputAmountList
+    function getInList(address factory, uint256 amountOut, address[] memory path) public returns(uint256[] memory){
+             // Check if the path is less than two then now valid swap, ie [tokenA,] =  tokenA -> ??? 
+        if(path.length < 2){
+            revert("Invalid swap, path lenght not sufficient");
+        }
+
+        // Array to save input length
+        uint256[] memory inputList = new uint256[](path.length);
+
+        //Saving last index value as output to the input list
+        inputList[inputList.length-1] = amountOut;
+
+        // Starting from last index
+        for(uint256 i = pair.length-1; i> 0;i--){
+            (uint112 r0, uint112 r1) = getReserves(factory,path[i-1],path[i]);
+            inputList[i-1] =getInputAmount(r0,r1,inputList[i])
+        }
+        return inputList;
+    }
+
+
 }
 
 

@@ -168,18 +168,6 @@ contract AraswapV2Pair is ERC20,Math{
             revert("Amount is greater than the reserves");
         }
 
-        //Estimated balance of the contract after swap
-        uint256 _balance0 = IERC20(token0).balanceOf(address(this)) - amount0out;
-        uint256 _balance1 = IERC20(token1).balanceOf(address(this)) - amount1out;
-
-        // Check to ensure that the product of reserves are equal or greater than k
-        if((r0 * r1) > (_balance0 * _balance1)){
-            revert("Invalid amounts");
-        }
-
-        // Update reserve (swap)
-        _update_(_balance0,_balance1);
-
         // Transfer token
         if(amount0out > 0){
             _safeTransfer(token0,to,amount0out);
@@ -187,6 +175,34 @@ contract AraswapV2Pair is ERC20,Math{
         if(amount1 > 0 ){
             _safeTransfer(token1,to,amount1out);
         }
+
+        // balance of the contract after swap
+        uint256 _balance0 = IERC20(token0).balanceOf(address(this));
+        uint256 _balance1 = IERC20(token1).balanceOf(address(this));
+
+        // Expcted balance after swap
+        uint256 expectedbalance0 = r0-amount0out;
+        uint256 exptctedbalance1 = r1-amount1out;
+
+        // Calculating fees
+        uint256 amount0In = balance0 > expectedbalance0? balance0 - expectedbalance0: 0;
+        uint256 amount1In = balance1 > exptctedbalance1? balance1 - exptctedbalance1: 0;
+
+        if(amount0In == 0 && amount1In == 0){
+            revert("Insufficient Input amount");
+        }
+
+        uint256 balance0Adjusted = (balance0 * 1000) - (amount0In * 3);
+        uint256 balance1Adjusted = (balance1 * 1000) - (amount1In * 3);
+
+        // Check to ensure that the product of reserves are equal or greater than k
+        if((r0 * r1)*(1000**2) > (balance0Adjusted * balance1Adjusted)){
+            revert("Invalid amounts");
+        }
+
+        // Update reserve (swap)
+        _update_(_balance0,_balance1);
+
 
         //Emitting event
         emit Swap(msg.sender,amount0out,amount1out,to);
